@@ -1,10 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using ToDoApp.DataAccess.Context;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
+builder.Services.AddDbContext<ToDoDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>

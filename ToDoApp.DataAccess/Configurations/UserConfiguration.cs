@@ -24,6 +24,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasMany(u => u.Tasks)
             .WithOne(t => t.User)
             .HasForeignKey(t => t.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
