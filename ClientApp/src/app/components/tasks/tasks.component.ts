@@ -30,4 +30,23 @@ export class TasksComponent implements OnInit {
       });
     }
   }
+
+  onDeleteTask(id: number): void {
+    this.taskService.deleteTask(id).subscribe(() => {
+      this.tasks = this.tasks.filter((task) => task.id !== id);
+    });
+  }
+
+  onToggleComplete(task: any): void {
+    task.isCompleted = !task.isCompleted;
+    this.taskService.updateTask(task.id, task).subscribe();
+  }
+
+  onEditTask(task: any): void {
+    const newTitle = prompt('Edit task title:', task.title);
+    if (newTitle) {
+      task.title = newTitle;
+      this.taskService.updateTask(task.id, task).subscribe();
+    }
+  }
 }

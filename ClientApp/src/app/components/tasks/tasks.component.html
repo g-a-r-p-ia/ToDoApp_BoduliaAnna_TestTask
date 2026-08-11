@@ -19,7 +19,25 @@
 
   <ul class="list-group">
     @for (task of tasks; track task.id) {
-      <li class="list-group-item">{{ task.title }}</li>
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+          <input
+            type="checkbox"
+            class="form-check-input me-2"
+            [checked]="task.isCompleted"
+            (change)="onToggleComplete(task)"
+          />
+          <span>{{ task.title }}</span>
+        </div>
+        <div>
+          <button class="btn btn-sm btn-warning me-2" (click)="onEditTask(task)">
+            Edit
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="onDeleteTask(task.id)">
+            Delete
+          </button>
+        </div>
+      </li>
     }
   </ul>
 </div>
