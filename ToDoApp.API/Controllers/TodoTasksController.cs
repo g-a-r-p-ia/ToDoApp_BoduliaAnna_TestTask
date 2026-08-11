@@ -69,7 +69,18 @@ public class TodoTasksController : ControllerBase
     [HttpDelete("{taskId}")]
     public async Task<IActionResult> SoftDelete(Guid taskId)
     {
-        await _todoTaskService.SoftDeleteAsync(taskId);
-        return Ok("Deleted");
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var deleted = await _todoTaskService.SoftDeleteAsync(taskId, userId);
+        if (!deleted)
+        {
+            return NotFound();
+        }
+
+        return NoContent();
     }
 }

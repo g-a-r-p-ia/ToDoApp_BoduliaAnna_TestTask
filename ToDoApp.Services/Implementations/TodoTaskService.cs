@@ -86,18 +86,19 @@ public class TodoTaskService : ITodoTaskService
         };
     }
 
-    public async Task<bool> SoftDeleteAsync(Guid taskId)
+    public async Task<bool> SoftDeleteAsync(Guid taskId, Guid userId)
     {
-        var task = await _context.TodoTasks.FindAsync(taskId);
-    
+        var task = await _context.TodoTasks
+            .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId && !t.IsDeleted);
+
         if (task == null)
         {
-            return false; 
+            return false;
         }
 
         task.IsDeleted = true;
         await _context.SaveChangesAsync();
 
-        return true; 
+        return true;
     }
 }
