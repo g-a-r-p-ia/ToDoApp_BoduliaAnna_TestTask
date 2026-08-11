@@ -11,6 +11,7 @@ public class TodoTask
     public Guid UserId { get; set; }
      public DateTime? UpdatedAt { get; set; }
      public bool IsDeleted { get; set; } = false;
+     public DateTime? Deadline { get; set; }
 
     public Category Category { get; set; } = null!;
     public User User { get; set; } = null!;
