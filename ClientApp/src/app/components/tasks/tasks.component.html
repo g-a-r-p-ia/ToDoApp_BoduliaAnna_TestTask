@@ -1,0 +1,25 @@
+<div class="container mt-4">
+  <h1 class="mb-4">My Tasks</h1>
+
+  <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="row g-3 mb-4">
+    <div class="col-auto">
+      <input
+        type="text"
+        class="form-control"
+        formControlName="title"
+        placeholder="New task title"
+      />
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-primary" [disabled]="taskForm.invalid">
+        Add Task
+      </button>
+    </div>
+  </form>
+
+  <ul class="list-group">
+    @for (task of tasks; track task.id) {
+      <li class="list-group-item">{{ task.title }}</li>
+    }
+  </ul>
+</div>
