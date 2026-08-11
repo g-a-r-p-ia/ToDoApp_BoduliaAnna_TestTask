@@ -1,8 +1,12 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Google.Apis.Auth;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using ToDoApp.DataAccess.Context;
+using ToDoApp.DataAccess.Entities;
 using ToDoApp.Services.Interfaces;
 
 namespace ToDoApp.Services.Implementations;
@@ -10,20 +14,38 @@ namespace ToDoApp.Services.Implementations;
 public class AuthService : IAuthService
 {
     private readonly IConfiguration _configuration;
+    private readonly ToDoDbContext _context;
 
-    public AuthService(IConfiguration configuration)
+    public AuthService(IConfiguration configuration, ToDoDbContext context)
     {
         _configuration = configuration;
+        _context = context;
     }
 
-    public Task<string> LoginWithGoogleAsync(string googleToken)
+    public async Task<string> LoginWithGoogleAsync(string googleToken)
     {
-        var userId = Guid.NewGuid();
+        var payload = await GoogleJsonWebSignature.ValidateAsync(googleToken);
+
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
+
+        if (user is null)
+        {
+            user = new User
+            {
+                Id = Guid.NewGuid(),
+                Email = payload.Email,
+                FirstName = payload.GivenName,
+                LastName = payload.FamilyName
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
 
         var claims = new[]
         {
-            new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, "test@gmail.com"),
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -38,6 +60,6 @@ public class AuthService : IAuthService
             signingCredentials: credentials);
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        return Task.FromResult(tokenHandler.WriteToken(token));
+        return tokenHandler.WriteToken(token);
     }
 }

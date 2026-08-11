@@ -8,13 +8,17 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.Property(u => u.Username)
+        builder.Property(u => u.Email)
+            .IsRequired()
+            .HasMaxLength(255);
+
+        builder.Property(u => u.FirstName)
             .IsRequired()
             .HasMaxLength(100);
 
-        builder.Property(u => u.PasswordHash)
+        builder.Property(u => u.LastName)
             .IsRequired()
-            .HasMaxLength(255);
+            .HasMaxLength(100);
 
         builder.HasMany(u => u.Categories)
             .WithOne(c => c.User)
