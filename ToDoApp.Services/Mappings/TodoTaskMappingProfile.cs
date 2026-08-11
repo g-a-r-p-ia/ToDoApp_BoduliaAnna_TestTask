@@ -11,5 +11,9 @@ public class TodoTaskMappingProfile : Profile
         CreateMap<TodoTask, TodoTaskDto>();
         
         CreateMap<CreateTodoTaskDto, TodoTask>();
+
+        CreateMap<Category, CategoryDto>();
+
+        CreateMap<CreateCategoryDto, Category>();
     }
 }

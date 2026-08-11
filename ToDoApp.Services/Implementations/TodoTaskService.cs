@@ -31,7 +31,9 @@ public class TodoTaskService : ITodoTaskService
 
     public async Task<PagedResultDto<TodoTaskDto>> GetAllForUserAsync(Guid userId, int pageNumber, int pageSize, string? searchTerm, Guid? categoryId)
     {
-        var query = _context.TodoTasks.Where(t => t.UserId == userId && !t.IsDeleted);
+        var query = _context.TodoTasks
+        .Include(t => t.Category)
+        .Where(t => t.UserId == userId && !t.IsDeleted);
 
         if (categoryId.HasValue)
         {
