@@ -29,6 +29,28 @@ public class TodoTaskService : ITodoTaskService
        return resultDto;
     }
 
+    public async Task<TodoTaskDto?> UpdateAsync(Guid taskId, UpdateTodoTaskDto dto, Guid userId)
+    {
+        var entity = await _context.TodoTasks
+            .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId && !t.IsDeleted);
+
+        if (entity == null)
+        {
+            return null;
+        }
+
+        entity.Title = dto.Title;
+        entity.Description = dto.Description;
+        entity.IsCompleted = dto.IsCompleted;
+        entity.CategoryId = dto.CategoryId;
+        entity.Deadline = dto.Deadline;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return _mapper.Map<TodoTaskDto>(entity);
+    }
+
     public async Task<PagedResultDto<TodoTaskDto>> GetAllForUserAsync(Guid userId, int pageNumber, int pageSize, string? searchTerm, Guid? categoryId)
     {
         var query = _context.TodoTasks

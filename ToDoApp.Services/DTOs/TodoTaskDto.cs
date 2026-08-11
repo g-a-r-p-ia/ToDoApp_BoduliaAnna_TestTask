@@ -9,4 +9,5 @@ public class TodoTaskDto
     public DateTime CreatedAt { get; set; }
     public DateTime? Deadline { get; set; }
     public Guid CategoryId { get; set; }
+    public string CategoryName { get; set; } = string.Empty;
 }

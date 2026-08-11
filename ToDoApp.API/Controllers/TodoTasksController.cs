@@ -48,6 +48,24 @@ public class TodoTasksController : ControllerBase
         return Ok(tasks);
     }
 
+    [HttpPut("{taskId}")]
+    public async Task<IActionResult> Update(Guid taskId, [FromBody] UpdateTodoTaskDto dto)
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
+        var result = await _todoTaskService.UpdateAsync(taskId, dto, userId);
+        if (result == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
+    }
+
     [HttpDelete("{taskId}")]
     public async Task<IActionResult> SoftDelete(Guid taskId)
     {
