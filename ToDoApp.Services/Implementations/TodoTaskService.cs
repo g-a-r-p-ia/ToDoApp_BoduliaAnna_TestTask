@@ -9,16 +9,20 @@ namespace ToDoApp.Services.Implementations;
 public class TodoTaskService : ITodoTaskService
 {
     private readonly ITodoTaskRepository _todoTaskRepository;
+    private readonly ICategoryRepository _categoryRepository;
     private readonly IMapper _mapper;
 
-    public TodoTaskService(ITodoTaskRepository todoTaskRepository, IMapper mapper)
+    public TodoTaskService(ITodoTaskRepository todoTaskRepository, ICategoryRepository categoryRepository, IMapper mapper)
     {
         _todoTaskRepository = todoTaskRepository;
+        _categoryRepository = categoryRepository;
         _mapper = mapper;
     }
 
     public async Task<TodoTaskDto> CreateAsync(CreateTodoTaskDto dto, Guid userId)
     {
+        await ValidateCategoryOwnershipAsync(dto.CategoryId, userId);
+
         var taskEntity = _mapper.Map<TodoTask>(dto);
         taskEntity.UserId = userId;
         taskEntity.CreatedAt = DateTime.UtcNow;
@@ -36,6 +40,8 @@ public class TodoTaskService : ITodoTaskService
             return null;
         }
 
+        await ValidateCategoryOwnershipAsync(dto.CategoryId, userId);
+
         entity.Title = dto.Title;
         entity.Description = dto.Description;
         entity.IsCompleted = dto.IsCompleted;
@@ -48,11 +54,11 @@ public class TodoTaskService : ITodoTaskService
         return _mapper.Map<TodoTaskDto>(entity);
     }
 
-    public async Task<PagedResultDto<TodoTaskDto>> GetAllForUserAsync(Guid userId, int pageNumber, int pageSize, string? searchTerm, Guid? categoryId)
+    public async Task<PagedResultDto<TodoTaskDto>> GetAllForUserAsync(Guid userId, int pageNumber, int pageSize, string? searchTerm, Guid? categoryId, bool? isCompleted)
     {
-        var totalCount = await _todoTaskRepository.CountForUserAsync(userId, searchTerm, categoryId);
+        var totalCount = await _todoTaskRepository.CountForUserAsync(userId, searchTerm, categoryId, isCompleted);
 
-        var tasks = await _todoTaskRepository.GetForUserAsync(userId, pageNumber, pageSize, searchTerm, categoryId);
+        var tasks = await _todoTaskRepository.GetForUserAsync(userId, pageNumber, pageSize, searchTerm, categoryId, isCompleted);
 
         var dtoList = _mapper.Map<IEnumerable<TodoTaskDto>>(tasks);
 
@@ -77,5 +83,15 @@ public class TodoTaskService : ITodoTaskService
         await _todoTaskRepository.SoftDeleteAsync(taskId, userId);
 
         return true;
+    }
+
+    private async Task ValidateCategoryOwnershipAsync(Guid categoryId, Guid userId)
+    {
+        var userCategories = await _categoryRepository.GetForUserAsync(userId);
+
+        if (userCategories.All(c => c.Id != categoryId))
+        {
+            throw new UnauthorizedAccessException("Invalid category.");
+        }
     }
 }
