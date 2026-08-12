@@ -7,7 +7,7 @@ using ToDoApp.Services.Interfaces;
 namespace ToDoApp.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/tasks")]
 [Authorize]
 public class TodoTasksController : ControllerBase
 {

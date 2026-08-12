@@ -3,8 +3,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ToDoApp.DataAccess.Context;
+using ToDoApp.DataAccess.Repositories;
+using ToDoApp.Interfaces.Repositories;
 using ToDoApp.Services.Implementations;
 using ToDoApp.Services.Interfaces;
+using ToDoApp.Services.Mappings;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +45,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddScoped<ITodoTaskRepository, TodoTaskRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<ITodoTaskService, TodoTaskService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+
+builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(TodoTaskMappingProfile)));
 
 var app = builder.Build();
 
@@ -55,6 +66,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

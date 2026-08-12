@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using ToDoApp.Services.DTOs;
 using ToDoApp.Services.Interfaces;
 
 namespace ToDoApp.API.Controllers;
@@ -19,5 +20,37 @@ public class AuthController : ControllerBase
     {
         var result = await _authService.LoginWithGoogleAsync(googleToken);
         return Ok(new { Token = result });
+    }
+
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterDto dto)
+    {
+        try
+        {
+            var result = await _authService.RegisterAsync(dto);
+            return Ok(new { Token = result });
+        }
+        catch (InvalidOperationException)
+        {
+            return Conflict(new { message = "An account with this email already exists." });
+        }
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    {
+        try
+        {
+            var result = await _authService.LoginAsync(dto);
+            return Ok(new { Token = result });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Unauthorized(new { message = "Invalid email or password." });
+        }
     }
 }
