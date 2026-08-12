@@ -36,7 +36,8 @@ public class TodoTasksController : ControllerBase
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? searchTerm = null,
-        [FromQuery] Guid? categoryId = null)
+        [FromQuery] Guid? categoryId = null,
+        [FromQuery] bool? isCompleted = null)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdClaim, out var userId))
@@ -44,7 +45,7 @@ public class TodoTasksController : ControllerBase
             return Unauthorized();
         }
 
-        var tasks = await _todoTaskService.GetAllForUserAsync(userId, pageNumber, pageSize, searchTerm, categoryId);
+        var tasks = await _todoTaskService.GetAllForUserAsync(userId, pageNumber, pageSize, searchTerm, categoryId, isCompleted);
         return Ok(tasks);
     }
 

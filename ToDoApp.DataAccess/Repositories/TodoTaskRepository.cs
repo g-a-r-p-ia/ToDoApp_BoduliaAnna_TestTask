@@ -20,7 +20,7 @@ public class TodoTaskRepository : ITodoTaskRepository
             .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId && !t.IsDeleted);
     }
 
-    public async Task<IEnumerable<TodoTask>> GetForUserAsync(Guid userId, int pageNumber, int pageSize, string? searchTerm, Guid? categoryId)
+    public async Task<IEnumerable<TodoTask>> GetForUserAsync(Guid userId, int pageNumber, int pageSize, string? searchTerm, Guid? categoryId, bool? isCompleted)
     {
         var query = _context.TodoTasks
             .Include(t => t.Category)
@@ -29,6 +29,11 @@ public class TodoTaskRepository : ITodoTaskRepository
         if (categoryId.HasValue)
         {
             query = query.Where(t => t.CategoryId == categoryId.Value);
+        }
+
+        if (isCompleted.HasValue)
+        {
+            query = query.Where(t => t.IsCompleted == isCompleted.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))
@@ -43,7 +48,7 @@ public class TodoTaskRepository : ITodoTaskRepository
             .ToListAsync();
     }
 
-    public async Task<int> CountForUserAsync(Guid userId, string? searchTerm, Guid? categoryId)
+    public async Task<int> CountForUserAsync(Guid userId, string? searchTerm, Guid? categoryId, bool? isCompleted)
     {
         var query = _context.TodoTasks
             .Where(t => t.UserId == userId && !t.IsDeleted);
@@ -51,6 +56,11 @@ public class TodoTaskRepository : ITodoTaskRepository
         if (categoryId.HasValue)
         {
             query = query.Where(t => t.CategoryId == categoryId.Value);
+        }
+
+        if (isCompleted.HasValue)
+        {
+            query = query.Where(t => t.IsCompleted == isCompleted.Value);
         }
 
         if (!string.IsNullOrWhiteSpace(searchTerm))

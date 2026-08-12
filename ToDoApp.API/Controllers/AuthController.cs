@@ -39,18 +39,7 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDto dto)
     {
-        try
-        {
-            var result = await _authService.LoginAsync(dto);
-            return Ok(new { Token = result });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Unauthorized(new { message = "Invalid email or password." });
-        }
+        var result = await _authService.LoginAsync(dto);
+        return Ok(new { Token = result });
     }
 }

@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using ToDoApp.API.Middleware;
 using ToDoApp.DataAccess.Context;
 using ToDoApp.DataAccess.Repositories;
 using ToDoApp.Interfaces.Repositories;
@@ -56,6 +57,8 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(TodoTaskMappingProfile)));
 
 var app = builder.Build();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {

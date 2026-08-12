@@ -49,3 +49,10 @@ yarn-error.log*
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# =============================================================
+# App configuration & secrets (never commit)
+# =============================================================
+appsettings.Development.json
+appsettings.*.json
+!appsettings.json
