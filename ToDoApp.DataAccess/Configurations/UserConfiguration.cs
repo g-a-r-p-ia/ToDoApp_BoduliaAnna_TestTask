@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using ToDoApp.DataAccess.Entities;
+using ToDoApp.Interfaces.Entities;
 
 namespace ToDoApp.DataAccess.Configurations;
 
@@ -19,6 +19,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LastName)
             .IsRequired()
             .HasMaxLength(100);
+
+        builder.Property(u => u.PasswordHash)
+            .HasMaxLength(255);
 
         builder.HasMany(u => u.Categories)
             .WithOne(c => c.User)

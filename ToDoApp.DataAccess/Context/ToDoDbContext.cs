@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using ToDoApp.DataAccess.Entities;
+using ToDoApp.Interfaces.Entities;
 
 namespace ToDoApp.DataAccess.Context;
 

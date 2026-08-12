@@ -1,4 +1,4 @@
-namespace ToDoApp.DataAccess.Entities;
+namespace ToDoApp.Interfaces.Entities;
 
 public class Category
 {
