@@ -1,7 +1,6 @@
 using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using ToDoApp.DataAccess.Context;
-using ToDoApp.DataAccess.Entities;
+using ToDoApp.Interfaces.Entities;
+using ToDoApp.Interfaces.Repositories;
 using ToDoApp.Services.DTOs;
 using ToDoApp.Services.Interfaces;
 
@@ -9,30 +8,28 @@ namespace ToDoApp.Services.Implementations;
 
 public class TodoTaskService : ITodoTaskService
 {
-    private readonly ToDoDbContext _context;
+    private readonly ITodoTaskRepository _todoTaskRepository;
     private readonly IMapper _mapper;
 
-    public TodoTaskService(ToDoDbContext context, IMapper mapper)
+    public TodoTaskService(ITodoTaskRepository todoTaskRepository, IMapper mapper)
     {
-        _context = context;
+        _todoTaskRepository = todoTaskRepository;
         _mapper = mapper;
     }
 
     public async Task<TodoTaskDto> CreateAsync(CreateTodoTaskDto dto, Guid userId)
     {
-       var taskEntity  = _mapper.Map<TodoTask>(dto);
-       taskEntity.UserId = userId;
-       _context.TodoTasks.Add(taskEntity);
-       await _context.SaveChangesAsync();
+        var taskEntity = _mapper.Map<TodoTask>(dto);
+        taskEntity.UserId = userId;
+        taskEntity.CreatedAt = DateTime.UtcNow;
+        await _todoTaskRepository.AddAsync(taskEntity);
 
-       var resultDto = _mapper.Map<TodoTaskDto>(taskEntity);
-       return resultDto;
+        return _mapper.Map<TodoTaskDto>(taskEntity);
     }
 
     public async Task<TodoTaskDto?> UpdateAsync(Guid taskId, UpdateTodoTaskDto dto, Guid userId)
     {
-        var entity = await _context.TodoTasks
-            .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId && !t.IsDeleted);
+        var entity = await _todoTaskRepository.GetByIdAsync(taskId, userId);
 
         if (entity == null)
         {
@@ -46,34 +43,16 @@ public class TodoTaskService : ITodoTaskService
         entity.Deadline = dto.Deadline;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await _todoTaskRepository.UpdateAsync(entity);
 
         return _mapper.Map<TodoTaskDto>(entity);
     }
 
     public async Task<PagedResultDto<TodoTaskDto>> GetAllForUserAsync(Guid userId, int pageNumber, int pageSize, string? searchTerm, Guid? categoryId)
     {
-        var query = _context.TodoTasks
-        .Include(t => t.Category)
-        .Where(t => t.UserId == userId && !t.IsDeleted);
+        var totalCount = await _todoTaskRepository.CountForUserAsync(userId, searchTerm, categoryId);
 
-        if (categoryId.HasValue)
-        {
-            query = query.Where(t => t.CategoryId == categoryId.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(searchTerm))
-        {
-            query = query.Where(t => t.Title.Contains(searchTerm));
-        }
-
-        var totalCount = await query.CountAsync();
-
-        var tasks = await query
-            .OrderByDescending(t => t.CreatedAt)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
+        var tasks = await _todoTaskRepository.GetForUserAsync(userId, pageNumber, pageSize, searchTerm, categoryId);
 
         var dtoList = _mapper.Map<IEnumerable<TodoTaskDto>>(tasks);
 
@@ -88,16 +67,14 @@ public class TodoTaskService : ITodoTaskService
 
     public async Task<bool> SoftDeleteAsync(Guid taskId, Guid userId)
     {
-        var task = await _context.TodoTasks
-            .FirstOrDefaultAsync(t => t.Id == taskId && t.UserId == userId && !t.IsDeleted);
+        var task = await _todoTaskRepository.GetByIdAsync(taskId, userId);
 
         if (task == null)
         {
             return false;
         }
 
-        task.IsDeleted = true;
-        await _context.SaveChangesAsync();
+        await _todoTaskRepository.SoftDeleteAsync(taskId, userId);
 
         return true;
     }

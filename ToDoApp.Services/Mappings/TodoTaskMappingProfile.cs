@@ -1,5 +1,5 @@
 using AutoMapper;
-using ToDoApp.DataAccess.Entities;
+using ToDoApp.Interfaces.Entities;
 using ToDoApp.Services.DTOs;
 
 namespace ToDoApp.Services.Mappings;

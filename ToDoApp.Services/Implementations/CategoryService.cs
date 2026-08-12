@@ -1,7 +1,6 @@
 using AutoMapper;
-using Microsoft.EntityFrameworkCore;
-using ToDoApp.DataAccess.Context;
-using ToDoApp.DataAccess.Entities;
+using ToDoApp.Interfaces.Entities;
+using ToDoApp.Interfaces.Repositories;
 using ToDoApp.Services.DTOs;
 using ToDoApp.Services.Interfaces;
 
@@ -9,12 +8,12 @@ namespace ToDoApp.Services.Implementations;
 
 public class CategoryService : ICategoryService
 {
-    private readonly ToDoDbContext _context;
+    private readonly ICategoryRepository _categoryRepository;
     private readonly IMapper _mapper;
 
-    public CategoryService(ToDoDbContext context, IMapper mapper)
+    public CategoryService(ICategoryRepository categoryRepository, IMapper mapper)
     {
-        _context = context;
+        _categoryRepository = categoryRepository;
         _mapper = mapper;
     }
 
@@ -22,17 +21,14 @@ public class CategoryService : ICategoryService
     {
         var categoryEntity = _mapper.Map<Category>(dto);
         categoryEntity.UserId = userId;
-        _context.Categories.Add(categoryEntity);
-        await _context.SaveChangesAsync();
+        await _categoryRepository.AddAsync(categoryEntity);
 
         return _mapper.Map<CategoryDto>(categoryEntity);
     }
 
     public async Task<IEnumerable<CategoryDto>> GetAllForUserAsync(Guid userId)
     {
-        var categories = await _context.Categories
-            .Where(c => c.UserId == userId)
-            .ToListAsync();
+        var categories = await _categoryRepository.GetForUserAsync(userId);
 
         return _mapper.Map<IEnumerable<CategoryDto>>(categories);
     }
