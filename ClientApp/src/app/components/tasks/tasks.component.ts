@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TaskService } from '../../core/services/task.service';
 
 interface TodoTask {
@@ -17,14 +17,17 @@ interface TodoTask {
   selector: 'app-tasks',
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.css',
-  imports: [ReactiveFormsModule]
+  imports: [ReactiveFormsModule, FormsModule]
 })
 export class TasksComponent implements OnInit {
   tasks: any[] = [];
-  filteredTasks: any[] = [];
   categories: any[] = [];
   selectedCategoryId = '';
   selectedStatus: 'all' | 'completed' | 'uncompleted' = 'all';
+  currentPage = 1;
+  pageSize = 10;
+  totalCount = 0;
+  searchTerm = '';
   errorMessage: string | null = null;
   taskForm = new FormGroup({
     title: new FormControl('', Validators.required),
@@ -40,23 +43,28 @@ export class TasksComponent implements OnInit {
   constructor(private taskService: TaskService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
-    this.getTasks();
+    this.loadTasks();
     this.getCategories();
   }
 
-  private getTasks(): void {
-    this.taskService.getTasks().subscribe({
-      next: (data) => {
-        this.tasks = [...data.items];
-        this.applyFilters();
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.errorMessage = this.getErrorMessage(err);
-        console.error('Failed to load tasks:', err);
-        this.cdr.detectChanges();
-      }
-    });
+  private loadTasks(): void {
+    const isCompleted =
+      this.selectedStatus === 'completed' ? true : this.selectedStatus === 'uncompleted' ? false : null;
+
+    this.taskService
+      .getTasks(this.currentPage, this.pageSize, this.selectedCategoryId || undefined, this.searchTerm, isCompleted)
+      .subscribe({
+        next: (data) => {
+          this.tasks = [...data.items];
+          this.totalCount = data.totalCount;
+          this.cdr.detectChanges();
+        },
+        error: (err) => {
+          this.errorMessage = this.getErrorMessage(err);
+          console.error('Failed to load tasks:', err);
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   private getCategories(): void {
@@ -75,23 +83,37 @@ export class TasksComponent implements OnInit {
 
   onCategoryFilterChange(event: Event): void {
     this.selectedCategoryId = (event.target as HTMLSelectElement).value;
-    this.applyFilters();
+    this.currentPage = 1;
+    this.loadTasks();
   }
 
   onStatusFilterChange(status: 'all' | 'completed' | 'uncompleted'): void {
     this.selectedStatus = status;
-    this.applyFilters();
+    this.currentPage = 1;
+    this.loadTasks();
   }
 
-  private applyFilters(): void {
-    this.filteredTasks = this.tasks.filter((task) => {
-      const matchesCategory = !this.selectedCategoryId || task.categoryId === this.selectedCategoryId;
-      const matchesStatus =
-        this.selectedStatus === 'all' ||
-        (this.selectedStatus === 'completed' && task.isCompleted) ||
-        (this.selectedStatus === 'uncompleted' && !task.isCompleted);
-      return matchesCategory && matchesStatus;
-    });
+  onSearch(): void {
+    this.currentPage = 1;
+    this.loadTasks();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalCount / this.pageSize);
+  }
+
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.currentPage++;
+      this.loadTasks();
+    }
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.currentPage--;
+      this.loadTasks();
+    }
   }
 
   onSubmit(): void {
@@ -106,7 +128,8 @@ export class TasksComponent implements OnInit {
 
     this.taskService.addTask({ title, categoryId }).subscribe({
       next: () => {
-        this.getTasks();
+        this.currentPage = 1;
+        this.loadTasks();
         this.taskForm.reset();
         this.cdr.detectChanges();
       },
@@ -121,7 +144,10 @@ export class TasksComponent implements OnInit {
   onDeleteTask(id: string): void {
     this.taskService.deleteTask(id).subscribe({
       next: () => {
-        this.getTasks();
+        if (this.tasks.length === 1 && this.currentPage > 1) {
+          this.currentPage--;
+        }
+        this.loadTasks();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -134,9 +160,9 @@ export class TasksComponent implements OnInit {
 
   onToggleComplete(task: any): void {
     task.isCompleted = !task.isCompleted;
-    this.applyFilters();
     this.taskService.updateTask(task.id, task).subscribe({
       next: () => {
+        this.loadTasks();
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -172,7 +198,8 @@ export class TasksComponent implements OnInit {
 
     this.taskService.updateTask(this.selectedTaskToEdit.id, { ...this.selectedTaskToEdit, title, categoryId }).subscribe({
       next: () => {
-        this.getTasks();
+        this.currentPage = 1;
+        this.loadTasks();
         this.closeEditModal();
         this.cdr.detectChanges();
       },

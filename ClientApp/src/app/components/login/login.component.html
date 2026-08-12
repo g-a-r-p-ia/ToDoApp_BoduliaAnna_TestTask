@@ -21,12 +21,9 @@
           </div>
           <div class="mb-3">
             <label for="loginPassword" class="form-label">Password</label>
-            @if ((loginForm.get('password')?.touched || loginForm.get('password')?.dirty) && loginForm.get('password')?.hasError('minlength')) {
-              <small class="text-danger d-block mb-1">The password must be at least 6 characters long</small>
-            }
-            <input id="loginPassword" type="password" class="form-control" formControlName="password" placeholder="At least 6 characters" [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
-            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
-              <div class="invalid-feedback">Password must be at least 6 characters.</div>
+            <input id="loginPassword" type="password" class="form-control" formControlName="password" placeholder="Enter password" [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            @if (loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched) {
+              <div class="invalid-feedback">Password is required.</div>
             }
           </div>
           <button type="submit" class="btn btn-primary w-100">Log In</button>

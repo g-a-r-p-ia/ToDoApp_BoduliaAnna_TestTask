@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -11,8 +11,30 @@ export class TaskService {
 
   constructor(private http: HttpClient) {}
 
-  getTasks(): Observable<any> {
-    return this.http.get<any>(this.apiUrl);
+  getTasks(
+    pageNumber: number = 1,
+    pageSize: number = 10,
+    categoryId?: string,
+    searchTerm?: string,
+    isCompleted?: boolean | null
+  ): Observable<any> {
+    let params = new HttpParams()
+      .set('pageNumber', pageNumber.toString())
+      .set('pageSize', pageSize.toString());
+
+    if (categoryId) {
+      params = params.set('categoryId', categoryId);
+    }
+
+    if (searchTerm && searchTerm.trim()) {
+      params = params.set('searchTerm', searchTerm.trim());
+    }
+
+    if (isCompleted !== null && isCompleted !== undefined) {
+      params = params.set('isCompleted', isCompleted);
+    }
+
+    return this.http.get<any>(this.apiUrl, { params });
   }
 
   getCategories(): Observable<any[]> {

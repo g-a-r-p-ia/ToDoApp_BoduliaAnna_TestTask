@@ -2,7 +2,7 @@
   <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h1 class="fw-bold text-dark mb-0">My Tasks</h1>
-      <span class="badge bg-primary rounded-pill">{{ tasks.length }} total</span>
+      <span class="badge bg-primary rounded-pill">{{ totalCount }} total</span>
     </div>
 
     @if (errorMessage) {
@@ -12,7 +12,7 @@
       </div>
     }
 
-    <div class="card shadow-sm border-0 mb-4">
+    <div class="card shadow-sm border-0 bg-primary bg-opacity-10 mb-4">
       <div class="card-body p-4">
         <h5 class="card-title fw-bold mb-3">Add New Task</h5>
         <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" novalidate>
@@ -54,6 +54,22 @@
       <div class="card-body p-4">
         <h5 class="card-title fw-bold mb-3">Task List</h5>
 
+        <div class="mb-3">
+          <label for="searchInput" class="form-label fw-semibold">Search</label>
+          <div class="input-group">
+            <input
+              id="searchInput"
+              type="search"
+              class="form-control"
+              placeholder="Search by task title..."
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="onSearch()"
+              aria-label="Search tasks"
+            />
+            <button type="button" class="btn btn-primary" (click)="onSearch()">Search</button>
+          </div>
+        </div>
+
         <div class="row g-3 mb-4">
           <div class="col-md-5">
             <label for="categoryFilter" class="form-label fw-semibold">Category</label>
@@ -76,15 +92,11 @@
 
         @if (tasks.length === 0) {
           <div class="text-center text-muted py-5">
-            <p class="mb-0">No tasks yet. Add your first task above!</p>
-          </div>
-        } @else if (filteredTasks.length === 0) {
-          <div class="text-center text-muted py-5">
-            <p class="mb-0">No tasks match the selected filters.</p>
+            <p class="mb-0">No tasks found. Try adjusting your search or filters, or add a new task.</p>
           </div>
         } @else {
           <div class="d-flex flex-column gap-2">
-            @for (task of filteredTasks; track task.id) {
+            @for (task of tasks; track task.id) {
               <div class="bg-white border rounded p-3 mb-2 shadow-sm d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
                   <input
@@ -115,6 +127,18 @@
                 </div>
               </div>
             }
+          </div>
+        }
+
+        @if (totalCount > 0) {
+          <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <button type="button" class="btn btn-outline-primary" [disabled]="currentPage <= 1" (click)="previousPage()">
+              Previous
+            </button>
+            <span class="fw-semibold text-muted">Current Page: {{ currentPage }} / {{ totalPages || 1 }}</span>
+            <button type="button" class="btn btn-outline-primary" [disabled]="currentPage >= totalPages || totalPages === 0" (click)="nextPage()">
+              Next
+            </button>
           </div>
         }
       </div>
