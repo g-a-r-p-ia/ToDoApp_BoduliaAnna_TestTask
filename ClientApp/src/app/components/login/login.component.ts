@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, NgZone } from '@angular/core';
+import { AfterViewInit, Component, NgZone, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -12,11 +12,12 @@ declare const google: any;
   styleUrl: './login.component.css',
   imports: [ReactiveFormsModule]
 })
-export class LoginComponent implements AfterViewInit {
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
   isLoginMode = true;
   loginForm: FormGroup;
   registerForm: FormGroup;
   apiErrorMessage = '';
+  private googleInitTimer?: ReturnType<typeof setInterval>;
 
   constructor(
     private router: Router,
@@ -37,41 +38,119 @@ export class LoginComponent implements AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    google.accounts.id.initialize({
-      client_id: environment.googleClientId,
-      callback: this.handleCredentialResponse.bind(this)
+  ngOnInit(): void {
+    this.loginForm.valueChanges.subscribe(() => {
+      this.apiErrorMessage = '';
     });
-    google.accounts.id.renderButton(
-      document.getElementById('google-signin-button'),
-      { theme: 'outline', size: 'large', shape: 'pill' }
-    );
+    this.registerForm.valueChanges.subscribe(() => {
+      this.apiErrorMessage = '';
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.initGoogleButton();
+  }
+
+  ngOnDestroy(): void {
+    if (this.googleInitTimer) {
+      clearInterval(this.googleInitTimer);
+    }
+  }
+
+  private initGoogleButton(): void {
+    const timeoutMs = 5000;
+    const startedAt = Date.now();
+
+    const timer = setInterval(() => {
+      if (typeof google !== 'undefined' && google.accounts?.id) {
+        clearInterval(timer);
+        google.accounts.id.initialize({
+          client_id: environment.googleClientId,
+          callback: this.handleCredentialResponse.bind(this)
+        });
+        google.accounts.id.renderButton(
+          document.getElementById('google-signin-button'),
+          { theme: 'outline', size: 'large', shape: 'pill' }
+        );
+      } else if (Date.now() - startedAt >= timeoutMs) {
+        clearInterval(timer);
+      }
+    }, 100);
+
+    this.googleInitTimer = timer;
   }
 
   toggleMode(): void {
     this.isLoginMode = !this.isLoginMode;
+    this.apiErrorMessage = '';
   }
 
   onLoginSubmit(): void {
+    this.apiErrorMessage = '';
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
     }
-    // TODO: [Your Task] Call the standard login endpoint via AuthService.
-    this.apiErrorMessage = 'That user does not exist. Please sign up.';
+
+    const { email, password } = this.loginForm.value;
+    this.authService.login(email, password).subscribe({
+      next: () => this.ngZone.run(() => this.router.navigate(['/tasks'])),
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.loginForm.markAllAsTouched();
+          if (this.isUserNotFoundError(err)) {
+            this.apiErrorMessage = 'You are not registered yet, register please.';
+          } else if (err.status === 401) {
+            this.apiErrorMessage = 'Invalid login credentials.';
+          } else {
+            this.apiErrorMessage = this.getErrorMessage(err);
+          }
+          console.error(err);
+        });
+      }
+    });
   }
 
   onRegisterSubmit(): void {
+    this.apiErrorMessage = '';
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       return;
     }
-    // TODO: [Your Task] Call the standard register endpoint via AuthService.
+
+    const { firstName, lastName, email, password } = this.registerForm.value;
+    this.authService.register(firstName, lastName, email, password).subscribe({
+      next: () => this.ngZone.run(() => this.router.navigate(['/tasks'])),
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.registerForm.markAllAsTouched();
+          this.apiErrorMessage = this.getErrorMessage(err);
+          console.error(err);
+        });
+      }
+    });
   }
 
   private handleCredentialResponse(response: any): void {
     this.authService.loginWithGoogle(response.credential).subscribe({
-      next: () => this.ngZone.run(() => this.router.navigate(['/tasks']))
+      next: () => this.ngZone.run(() => this.router.navigate(['/tasks'])),
+      error: (err) => {
+        this.ngZone.run(() => {
+          this.apiErrorMessage = this.getErrorMessage(err);
+          console.error(err);
+        });
+      }
     });
+  }
+
+  private isUserNotFoundError(err: any): boolean {
+    const message = `${err?.error?.message ?? ''} ${err?.message ?? ''}`.toLowerCase();
+    return err?.status === 404
+      || message.includes('not found')
+      || message.includes('does not exist');
+  }
+
+  private getErrorMessage(err: any): string {
+    return err?.error?.message || err?.message || 'An unexpected error occurred. Please try again.';
   }
 }

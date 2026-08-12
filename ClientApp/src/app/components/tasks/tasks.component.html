@@ -1,43 +1,177 @@
-<div class="container mt-4">
-  <h1 class="mb-4">My Tasks</h1>
-
-  <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" class="row g-3 mb-4">
-    <div class="col-auto">
-      <input
-        type="text"
-        class="form-control"
-        formControlName="title"
-        placeholder="New task title"
-      />
+<div class="bg-white min-vh-100 py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1 class="fw-bold text-dark mb-0">My Tasks</h1>
+      <span class="badge bg-primary rounded-pill">{{ tasks.length }} total</span>
     </div>
-    <div class="col-auto">
-      <button type="submit" class="btn btn-primary" [disabled]="taskForm.invalid">
-        Add Task
-      </button>
-    </div>
-  </form>
 
-  <ul class="list-group">
-    @for (task of tasks; track task.id) {
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-          <input
-            type="checkbox"
-            class="form-check-input me-2"
-            [checked]="task.isCompleted"
-            (change)="onToggleComplete(task)"
-          />
-          <span>{{ task.title }}</span>
-        </div>
-        <div>
-          <button class="btn btn-sm btn-warning me-2" (click)="onEditTask(task)">
-            Edit
-          </button>
-          <button class="btn btn-sm btn-danger" (click)="onDeleteTask(task.id)">
-            Delete
-          </button>
-        </div>
-      </li>
+    @if (errorMessage) {
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ errorMessage }}
+        <button type="button" class="btn-close" aria-label="Close" (click)="errorMessage = null"></button>
+      </div>
     }
-  </ul>
+
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body p-4">
+        <h5 class="card-title fw-bold mb-3">Add New Task</h5>
+        <form [formGroup]="taskForm" (ngSubmit)="onSubmit()" novalidate>
+          <div class="row g-3">
+            <div class="col-md-5">
+              <input
+                type="text"
+                class="form-control form-control-lg"
+                formControlName="title"
+                placeholder="Task title"
+                [class.is-invalid]="taskForm.get('title')?.invalid && taskForm.get('title')?.touched"
+              />
+              @if (taskForm.get('title')?.invalid && taskForm.get('title')?.touched) {
+                <div class="invalid-feedback">Task title is required.</div>
+              }
+            </div>
+            <div class="col-md-4">
+              <select class="form-select form-select-lg" formControlName="categoryId" [class.is-invalid]="taskForm.get('categoryId')?.invalid && taskForm.get('categoryId')?.touched">
+                <option value="" disabled>Select category</option>
+                @for (category of categories; track category.id) {
+                  <option [value]="category.id">{{ category.name }}</option>
+                }
+              </select>
+              @if (taskForm.get('categoryId')?.invalid && taskForm.get('categoryId')?.touched) {
+                <div class="invalid-feedback">Please select a category.</div>
+              }
+            </div>
+            <div class="col-md-3 d-grid">
+              <button type="submit" class="btn btn-primary btn-lg">
+                Add Task
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h5 class="card-title fw-bold mb-3">Task List</h5>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-5">
+            <label for="categoryFilter" class="form-label fw-semibold">Category</label>
+            <select id="categoryFilter" class="form-select" [value]="selectedCategoryId" (change)="onCategoryFilterChange($event)">
+              <option value="">All Categories</option>
+              @for (category of categories; track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-7">
+            <span class="form-label fw-semibold d-block">Status</span>
+            <div class="btn-group w-100" role="group" aria-label="Task status filter">
+              <button type="button" class="btn" [class.btn-primary]="selectedStatus === 'all'" [class.btn-outline-primary]="selectedStatus !== 'all'" (click)="onStatusFilterChange('all')">All</button>
+              <button type="button" class="btn" [class.btn-primary]="selectedStatus === 'completed'" [class.btn-outline-primary]="selectedStatus !== 'completed'" (click)="onStatusFilterChange('completed')">Completed</button>
+              <button type="button" class="btn" [class.btn-primary]="selectedStatus === 'uncompleted'" [class.btn-outline-primary]="selectedStatus !== 'uncompleted'" (click)="onStatusFilterChange('uncompleted')">Uncompleted</button>
+            </div>
+          </div>
+        </div>
+
+        @if (tasks.length === 0) {
+          <div class="text-center text-muted py-5">
+            <p class="mb-0">No tasks yet. Add your first task above!</p>
+          </div>
+        } @else if (filteredTasks.length === 0) {
+          <div class="text-center text-muted py-5">
+            <p class="mb-0">No tasks match the selected filters.</p>
+          </div>
+        } @else {
+          <div class="d-flex flex-column gap-2">
+            @for (task of filteredTasks; track task.id) {
+              <div class="bg-white border rounded p-3 mb-2 shadow-sm d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    [checked]="task.isCompleted"
+                    (change)="onToggleComplete(task)"
+                  />
+                  <span class="fs-5">{{ getCategoryEmoji(task.categoryName) }}</span>
+                  <div>
+                    <div class="fw-semibold text-dark" [class.text-decoration-line-through]="task.isCompleted">
+                      {{ task.title }}
+                    </div>
+                    @if (task.categoryName) {
+                      <span class="badge bg-primary bg-opacity-10 text-primary mt-1">
+                        {{ task.categoryName }}
+                      </span>
+                    }
+                  </div>
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm btn-outline-primary" (click)="openEditModal(task)">
+                    Edit
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger" (click)="onDeleteTask(task.id)">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
 </div>
+
+@if (isEditModalOpen) {
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="editTaskModalLabel">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editTaskModalLabel">Edit Task</h5>
+          <button type="button" class="btn-close" aria-label="Close" (click)="closeEditModal()"></button>
+        </div>
+        <div class="modal-body">
+          @if (selectedTaskToEdit) {
+            <form [formGroup]="editTaskForm" (ngSubmit)="saveEditModal()" novalidate>
+              <div class="mb-3">
+                <label for="editTaskTitle" class="form-label fw-semibold">Title</label>
+                <input
+                  type="text"
+                  id="editTaskTitle"
+                  class="form-control"
+                  formControlName="title"
+                  [class.is-invalid]="editTaskForm.get('title')?.invalid && editTaskForm.get('title')?.touched"
+                />
+                @if (editTaskForm.get('title')?.invalid && editTaskForm.get('title')?.touched) {
+                  <div class="invalid-feedback">Task title is required.</div>
+                }
+              </div>
+              <div class="mb-3">
+                <label for="editTaskCategory" class="form-label fw-semibold">Category</label>
+                <select
+                  id="editTaskCategory"
+                  class="form-select"
+                  formControlName="categoryId"
+                  [class.is-invalid]="editTaskForm.get('categoryId')?.invalid && editTaskForm.get('categoryId')?.touched"
+                >
+                  <option value="" disabled>Select category</option>
+                  @for (category of categories; track category.id) {
+                    <option [value]="category.id">{{ category.name }}</option>
+                  }
+                </select>
+                @if (editTaskForm.get('categoryId')?.invalid && editTaskForm.get('categoryId')?.touched) {
+                  <div class="invalid-feedback">Please select a category.</div>
+                }
+              </div>
+            </form>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+          <button type="button" class="btn btn-primary" (click)="saveEditModal()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}

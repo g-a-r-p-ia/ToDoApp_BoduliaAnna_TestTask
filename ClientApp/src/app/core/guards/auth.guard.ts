@@ -6,7 +6,7 @@ export const authGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   // Check whether a JWT token is stored in the browser's localStorage.
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('jwt_token');
 
   // If the token exists, the user is authenticated and access is granted.
   if (token) {

@@ -1,9 +1,10 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
   <div class="container-fluid">
-    <a class="navbar-brand" routerLink="/tasks">ToDo App</a>
-    <div class="d-flex">
-      <button class="btn btn-outline-light me-2" routerLink="/login">Login</button>
-      <button class="btn btn-outline-light">Logout</button>
+    <a class="navbar-brand fw-bold text-primary" routerLink="/tasks">ToDo App</a>
+    <div class="ms-auto">
+      @if (authService.isAuthenticated() | async) {
+        <button class="btn btn-outline-primary" (click)="logout()">Logout</button>
+      }
     </div>
   </div>
 </nav>

@@ -31,7 +31,7 @@
           </div>
           <button type="submit" class="btn btn-primary w-100">Log In</button>
           @if (apiErrorMessage) {
-            <div class="text-danger mt-2">{{ apiErrorMessage }}</div>
+            <div class="alert alert-danger mt-2 mb-0">{{ apiErrorMessage }}</div>
           }
         </form>
       } @else {
@@ -67,6 +67,9 @@
             }
           </div>
           <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+          @if (apiErrorMessage) {
+            <div class="alert alert-danger mt-2 mb-0">{{ apiErrorMessage }}</div>
+          }
         </form>
       }
 
