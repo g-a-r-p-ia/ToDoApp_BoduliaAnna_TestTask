@@ -1,13 +1,93 @@
-<div class="d-flex justify-content-center align-items-center vh-100">
-  <div class="card shadow" style="width: 24rem;">
-    <div class="card-body p-4">
-      <h3 class="card-title text-center mb-4">Login</h3>
-      <p class="text-center text-muted mb-4">Sign in to manage your tasks</p>
-      <div class="d-grid">
-        <button type="button" class="btn btn-primary btn-lg">
-          Login with Google
-        </button>
+<div class="min-vh-100 d-flex justify-content-center align-items-center bg-light py-5">
+  <div class="card shadow-sm border-0" style="width: 26rem;">
+    <div class="card-body p-5">
+      <div class="text-center mb-4">
+        <img src="https://api.dicebear.com/7.x/micah/svg?seed=Aneka" alt="Avatar" class="rounded-circle mb-3" style="width: 64px; height: 64px;">
+        <h3 class="card-title fw-bold mb-2">{{ isLoginMode ? 'Welcome back' : 'Create account' }}</h3>
+        <p class="text-muted mb-0">{{ isLoginMode ? 'Sign in to manage your tasks' : 'Join to start managing your tasks' }}</p>
       </div>
+
+      @if (isLoginMode) {
+        <form [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()" novalidate>
+          <div class="mb-3">
+            <label for="loginEmail" class="form-label">Email</label>
+            @if ((loginForm.get('email')?.touched || loginForm.get('email')?.dirty) && loginForm.get('email')?.hasError('email')) {
+              <small class="text-danger d-block mb-1">Invalid email format</small>
+            }
+            <input id="loginEmail" type="email" class="form-control" formControlName="email" placeholder="you@example.com" [class.is-invalid]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+            @if (loginForm.get('email')?.invalid && loginForm.get('email')?.touched) {
+              <div class="invalid-feedback">Please enter a valid email address.</div>
+            }
+          </div>
+          <div class="mb-3">
+            <label for="loginPassword" class="form-label">Password</label>
+            @if ((loginForm.get('password')?.touched || loginForm.get('password')?.dirty) && loginForm.get('password')?.hasError('minlength')) {
+              <small class="text-danger d-block mb-1">The password must be at least 6 characters long</small>
+            }
+            <input id="loginPassword" type="password" class="form-control" formControlName="password" placeholder="At least 6 characters" [class.is-invalid]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+              <div class="invalid-feedback">Password must be at least 6 characters.</div>
+            }
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Log In</button>
+          @if (apiErrorMessage) {
+            <div class="text-danger mt-2">{{ apiErrorMessage }}</div>
+          }
+        </form>
+      } @else {
+        <form [formGroup]="registerForm" (ngSubmit)="onRegisterSubmit()" novalidate>
+          <div class="row">
+            <div class="col-6 mb-3">
+              <label for="firstName" class="form-label">First name</label>
+              <input id="firstName" type="text" class="form-control" formControlName="firstName" placeholder="Jane" [class.is-invalid]="registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched">
+              @if (registerForm.get('firstName')?.invalid && registerForm.get('firstName')?.touched) {
+                <div class="invalid-feedback">First name is required.</div>
+              }
+            </div>
+            <div class="col-6 mb-3">
+              <label for="lastName" class="form-label">Last name</label>
+              <input id="lastName" type="text" class="form-control" formControlName="lastName" placeholder="Doe" [class.is-invalid]="registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched">
+              @if (registerForm.get('lastName')?.invalid && registerForm.get('lastName')?.touched) {
+                <div class="invalid-feedback">Last name is required.</div>
+              }
+            </div>
+          </div>
+          <div class="mb-3">
+            <label for="registerEmail" class="form-label">Email</label>
+            <input id="registerEmail" type="email" class="form-control" formControlName="email" placeholder="you@example.com" [class.is-invalid]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            @if (registerForm.get('email')?.invalid && registerForm.get('email')?.touched) {
+              <div class="invalid-feedback">Please enter a valid email address.</div>
+            }
+          </div>
+          <div class="mb-3">
+            <label for="registerPassword" class="form-label">Password</label>
+            <input id="registerPassword" type="password" class="form-control" formControlName="password" placeholder="At least 6 characters" [class.is-invalid]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+            @if (registerForm.get('password')?.invalid && registerForm.get('password')?.touched) {
+              <div class="invalid-feedback">Password must be at least 6 characters.</div>
+            }
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Sign Up</button>
+        </form>
+      }
+
+      <div class="d-flex align-items-center my-4">
+        <hr class="flex-grow-1">
+        <span class="text-muted small px-3">or</span>
+        <hr class="flex-grow-1">
+      </div>
+
+      <div id="google-signin-button" class="d-grid justify-content-center"></div>
+
+      <p class="text-center mt-4 mb-0">
+        @if (isLoginMode) {
+          <span class="text-muted">Don't have an account?</span>
+          <button type="button" class="btn btn-link p-0 align-baseline text-primary fw-semibold" (click)="toggleMode()">Sign up</button>
+        } @else {
+          <span class="text-muted">Already have an account?</span>
+          <button type="button" class="btn btn-link p-0 align-baseline text-primary fw-semibold" (click)="toggleMode()">Login</button>
+        }
+      </p>
+
     </div>
   </div>
 </div>
